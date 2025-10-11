@@ -53,7 +53,7 @@ SkillForge is a comprehensive platform offering features such as course creation
 - **Database**: PostgreSQL
 - **Caching**: Redis
 - **Task Management**: Celery & Celery Beat
-- **Storage**: Amazon S3
+- **Storage**: Supabase
 - **Authentication**: JWT & Google OAuth
 - **Payment Integration**: STRIPE
 - **Video Chat**: ZegoCloud
@@ -96,10 +96,11 @@ SkillForge is a comprehensive platform offering features such as course creation
    EMAIL_HOST_PASSWORD=your_app_password
    DEFAULT_FROM_EMAIL=your_email@gmail.com
 
-   # AWS
-   AWS_ACCESS_KEY_ID=your_aws_access_key
-   AWS_SECRET_ACCESS_KEY=your_aws_secret_key
-   AWS_STORAGE_BUCKET_NAME=your_bucket_name
+   # Supabase
+   SUPABASE_URL= Your_SupaBase_URL
+   SUPABASE_KEY= Your_ANON_key_for_reading_public_files
+   SUPABASE_SERVICE_KEY=Your_ANON_key_for_reading_public_files
+   SUPABASE_BUCKET=skillforge-media
 
    # Google OAuth
    GOOGLE_OAUTH_CLIENT_ID=your_client_id
