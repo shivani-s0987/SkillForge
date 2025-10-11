@@ -1,6 +1,6 @@
 # SkillForge
 
-Welcome to the SkillForge Backend repository! SkillForge is an innovative e-learning platform designed for students, tutors, and admins, providing an interactive, collaborative, and engaging learning experience.
+Welcome to the SkillForge repository! SkillForge is an innovative e-learning platform designed for students, tutors, and admins, providing an interactive, collaborative, and engaging learning experience.
 
 ## Overview
 
