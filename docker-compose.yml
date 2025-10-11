@@ -1,11 +1,13 @@
+version: "3.9"
+
 services:
+  # -------------------- Django API (Gunicorn) --------------------
   web:
     build: .
-    command: ["gunicorn", "--bind", ":8000", "backend.wsgi:application"]
-    # command: ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+    command: ["gunicorn", "--bind", "0.0.0.0:8000", "backend.wsgi:application"]
     volumes:
       - .:/app
-      - media_volume:/app/media/
+      - media_volume:/app/media
     ports:
       - "8000:8000"
     depends_on:
@@ -13,12 +15,28 @@ services:
       - redis
     env_file:
       - .env
-
     networks:
       - backend-network
 
+  # -------------------- Daphne for WebSockets --------------------
+  daphne:
+    build: .
+    command: ["daphne", "-b", "0.0.0.0", "-p", "8001", "backend.asgi:application"]
+    volumes:
+      - .:/app
+    ports:
+      - "8001:8001"
+    depends_on:
+      - db
+      - redis
+    env_file:
+      - .env
+    networks:
+      - backend-network
+
+  # -------------------- Postgres DB --------------------
   db:
-    image: postgres
+    image: postgres:15
     volumes:
       - db_data:/var/lib/postgresql/data
     environment:
@@ -28,19 +46,15 @@ services:
     networks:
       - backend-network
 
-  celery-beat:
-    build: .
-    command: ["celery", "-A", "backend", "beat", "--loglevel=info"]
-    volumes:
-      - .:/app 
-      - .:/app
-    depends_on:
-      - db
-    env_file:
-      - .env
+  # -------------------- Redis --------------------
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
     networks:
       - backend-network
 
+  # -------------------- Celery Worker --------------------
   celery-worker:
     build: .
     command: ["celery", "-A", "backend", "worker", "--loglevel=info"]
@@ -54,37 +68,26 @@ services:
     networks:
       - backend-network
 
-  redis:
-    image: "redis:alpine"
-    ports:
-      - "6379:6379"
-    networks:
-      - backend-network
-      
-  daphne:
+  # -------------------- Celery Beat --------------------
+  celery-beat:
     build: .
-    command: daphne -b 0.0.0.0 -p 8001 backend.asgi:application
+    command: ["celery", "-A", "backend", "beat", "--loglevel=info"]
     volumes:
       - .:/app
-    ports:
-      - "8001:8001"
     depends_on:
       - db
-      # - web
       - redis
     env_file:
       - .env
-    environment:
-      - DJANGO_SETTINGS_MODULE=backend.settings
     networks:
       - backend-network
 
-  
-
+# -------------------- Volumes --------------------
 volumes:
   db_data:
   media_volume:
 
+# -------------------- Network --------------------
 networks:
   backend-network:
     driver: bridge
