@@ -1,4 +1,4 @@
-# Learnora Backend
+# SkillForge
 
 Welcome to the Learnora Backend repository! Learnora is an innovative e-learning platform designed for students, tutors, and admins, providing an interactive, collaborative, and engaging learning experience.
 
@@ -66,8 +66,8 @@ Learnora is a comprehensive platform offering features such as course creation, 
 
 1. **Clone the Repository**
    ```bash
-   git clone https://github.com/danish-kv/learnora-backend
-   cd learnora-backend
+   git clone https://github.com/shivani-s0987/SkillForge.git
+   cd SkillForge
    ```
 
 2. **Configure Environment Variables**
