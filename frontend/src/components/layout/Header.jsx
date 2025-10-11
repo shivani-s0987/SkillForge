@@ -56,7 +56,7 @@ function Header() {
             <Link to="/" className="flex-shrink-0">
               <img
                 src="/logo.png"
-                alt="Learnora Logo"
+                alt="SkillForge Logo"
                 className="h-10 w-auto"
               />
             </Link>

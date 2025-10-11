@@ -65,7 +65,7 @@ const AdminSidebar = () => {
     >
       <div className="flex items-center justify-between h-16 px-4 bg-indigo-800">
         {isSidebarOpen ? (
-          <h1 className="text-white text-xl font-bold truncate">Learnora</h1>
+          <h1 className="text-white text-xl font-bold truncate">SkillForge</h1>
         ) : (
           <h1 className="text-white text-xl font-bold">LN</h1>
         )}

@@ -118,7 +118,7 @@ const FloatingChatBot = () => {
       {isOpen ? (
         <div className="bg-white rounded-lg shadow-2xl w-full sm:w-96 h-[500px] flex flex-col animate-fade-in-up">
           <div className="flex justify-between items-center p-4 bg-indigo-600 text-white rounded-t-lg">
-            <h3 className="text-lg font-semibold">Learnora AI</h3>
+            <h3 className="text-lg font-semibold">SkillForge AI</h3>
             <button
               onClick={() => setIsOpen(false)}
               className="text-white hover:text-gray-200 transition duration-300"

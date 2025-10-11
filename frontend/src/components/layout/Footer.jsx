@@ -10,10 +10,10 @@ const Footer = () => {
         <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
           {/* Company Info */}
           <div>
-            <h2 className="text-2xl font-bold text-indigo-600 mb-4">LEARNORA</h2>
+            <h2 className="text-2xl font-bold text-indigo-600 mb-4">SkillForge</h2>
             <p className="text-gray-600 mb-4">
               {" "}
-              LEARNORA is an e-learning platform offering personalized courses,
+              SkillForge is an e-learning platform offering personalized courses,
               engaging contests, and community-driven learning for everyone,
               anywhere.
             </p>
@@ -51,7 +51,7 @@ const Footer = () => {
                 <h3 className="text-sm font-semibold text-gray-500 mb-2">
                   Email Address
                 </h3>
-                <p className="text-gray-600 text-sm">learnora@email.com</p>
+                <p className="text-gray-600 text-sm">SkillForge@email.com</p>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 mb-2">
@@ -66,7 +66,7 @@ const Footer = () => {
 
         <div className="mt-8 pt-4 border-t border-gray-200 flex flex-wrap justify-between items-center">
           <p className="text-gray-500 text-sm">
-            All rights reserved &copy; LEARNORA
+            All rights reserved &copy; SkillForge
           </p>
           <nav className="flex space-x-4 text-sm">
             <Link to={"/courses"}>

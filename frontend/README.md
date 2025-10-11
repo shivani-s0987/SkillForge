@@ -1,6 +1,6 @@
-# Learnora Frontend
+# SkillForge Frontend
 
-Welcome to the Learnora Frontend repository! This is the client-side application for Learnora, an innovative e-learning platform that provides an interactive and engaging learning experience for students, tutors, and administrators.
+Welcome to the SkillForge Frontend repository! This is the client-side application for SkillForge, an innovative e-learning platform that provides an interactive and engaging learning experience for students, tutors, and administrators.
 
 ## Features
 
@@ -113,4 +113,4 @@ src/
 
 ## Related Projects
 
-- [Learnora Backend](https://github.com/danish-kv/learnora-backend)
+- [SkillForge Backend](https://github.com/danish-kv/SkillForge-backend)

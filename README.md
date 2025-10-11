@@ -1,10 +1,10 @@
 # SkillForge
 
-Welcome to the Learnora Backend repository! Learnora is an innovative e-learning platform designed for students, tutors, and admins, providing an interactive, collaborative, and engaging learning experience.
+Welcome to the SkillForge Backend repository! SkillForge is an innovative e-learning platform designed for students, tutors, and admins, providing an interactive, collaborative, and engaging learning experience.
 
 ## Overview
 
-Learnora is a comprehensive platform offering features such as course creation, community-based learning, contests, and more. It supports three main user roles:
+SkillForge is a comprehensive platform offering features such as course creation, community-based learning, contests, and more. It supports three main user roles:
 
 - **Student**: Can purchase or rent courses, take notes, participate in contests, and join discussions.
 - **Tutor**: Can create courses, manage communities, and participate in video chats and group discussions.
@@ -78,7 +78,7 @@ Learnora is a comprehensive platform offering features such as course creation, 
    ```env
 
    # Database
-   DB_NAME=learnora_db
+   DB_NAME=SkillForge_db
    DB_USER=postgres
    DB_PASSWORD=your_password
    DB_HOST=db
@@ -157,8 +157,8 @@ Learnora is a comprehensive platform offering features such as course creation, 
 
 6. **Start Celery Worker and Beat**
    ```bash
-   celery -A learnora worker --loglevel=info
-   celery -A learnora beat --loglevel=info
+   celery -A SkillForge worker --loglevel=info
+   celery -A SkillForge beat --loglevel=info
    ```
 
 7. **Run the Server**
