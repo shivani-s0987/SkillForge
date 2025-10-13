@@ -41,24 +41,24 @@ const Footer = () => {
                   Address
                 </h3>
                 <p className="text-gray-600 text-sm">
-                  Technology Park Malappuram
+                  SkillForge Pvt Ltd,
                 </p>
                 <p className="text-gray-600 text-sm">
-                  Chammed 636711 Kerala India
+                  Bangalore 560035 Karnataka India
                 </p>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 mb-2">
                   Email Address
                 </h3>
-                <p className="text-gray-600 text-sm">SkillForge@email.com</p>
+                <p className="text-gray-600 text-sm">SkillForgeadmin@email.com</p>
               </div>
               <div>
                 <h3 className="text-sm font-semibold text-gray-500 mb-2">
                   Phone Number
                 </h3>
-                <p className="text-gray-600 text-sm">(+91) 8891 1365 05</p>
-                <p className="text-gray-600 text-sm">918 891 1365 05</p>
+                <p className="text-gray-600 text-sm">(+91) 01010 10101</p>
+                <p className="text-gray-600 text-sm">(+91) 21212 32323</p>
               </div>
             </div>
           </div>
