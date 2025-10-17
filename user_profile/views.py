@@ -20,9 +20,10 @@ from course.models import Course, StudentCourseProgress, Transaction, Module, Re
 from course.serializers import (
     TransactionSerializer, ReviewSerializer, StudentCourseProgressSerializer
 )
-from contest.models import Leaderboard
+from contest.models import Contest, Participant, Leaderboard
 from contest.serializers import LeaderboardSerializer
 from .validation import TutorProfileValidator
+from django.shortcuts import get_object_or_404
 
 # Create your views here.
 
@@ -376,5 +377,178 @@ class TutorSalesReport(viewsets.ViewSet):
                 return Response({"sales": sales_report.data}, status=status.HTTP_200_OK)
             except ValueError:
                 return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class StudentAnalyticsViewSet(viewsets.ViewSet):
+    """
+    ViewSet to provide student analytics data for tutors.
+    """
+    def list(self, request):
+        # Return list of students with basic aggregated metrics and time-series placeholders
+        students = CustomUser.objects.filter(role='student').select_related()
+        data = []
+        for s in students:
+            enrolled = StudentCourseProgress.objects.filter(student=s)
+            contests = Leaderboard.objects.filter(user=s)
+            total_study_hours = enrolled.aggregate(total_hours=Sum('watch_time'))['total_hours'] or 0
+            completion_pct = 0
+            total_courses = enrolled.count()
+            if total_courses:
+                completed = enrolled.filter(progress='Completed').count()
+                completion_pct = int((completed / total_courses) * 100)
+
+            data.append({
+                'id': s.id,
+                'name': s.username or s.first_name,
+                'email': s.email,
+                'enrolled_courses_count': total_courses,
+                'total_study_hours': total_study_hours,
+                'completion_pct': completion_pct,
+                'total_tests': contests.count(),
+                'contest_scores': list(contests.values('score', 'rank', 'contest_id'))
+            })
+
+        # time-series placeholders
+        time_series = {
+            'enrollments_over_time': [],
+            'scores_trend': []
+        }
+
+        aggregated = {
+            'total_students': students.count(),
+            'average_score': Leaderboard.objects.aggregate(avg_score=Sum('score'))['avg_score'] or 0,
+            'top_performers': list(Leaderboard.objects.order_by('-score')[:5].values('user__username','score'))
+        }
+
+        return Response({'students': data, 'aggregated': aggregated, 'time_series': time_series}, status=status.HTTP_200_OK)
+
+
+class StudentDetailAnalytics(views.APIView):
+    """
+    Return detailed analytics for a single student.
+    Endpoint: /api/students/<id>/analytics/
+    """
+    def get(self, request, pk):
+        student = get_object_or_404(CustomUser, pk=pk, role='student')
+
+        # Enrolled courses with progress and watch_time
+        enrolled = StudentCourseProgress.objects.filter(student=student).select_related('course')
+        courses = []
+        for e in enrolled:
+            courses.append({
+                'id': e.course.id,
+                'title': e.course.title,
+                'progress': e.progress,
+                'watch_time': e.watch_time,
+                'started_at': e.created_at,
+                'updated_at': e.updated_at
+            })
+
+
+        # Contests/tests conducted by this tutor and student's participation (present or absent)
+        # Assumption: tutor is viewing students; if tutor profile missing, fall back to all contests
+        tutor = getattr(request.user, 'tutor_profile', None)
+        if tutor:
+            contests_qs = Contest.objects.filter(tutor=tutor).order_by('-start_time')
         else:
-            return Response({"error": "Missing 'start' or 'end' date"}, status=status.HTTP_400_BAD_REQUEST)
+            contests_qs = Contest.objects.all().order_by('-start_time')
+
+        # Fetch participant and leaderboard entries for this student across those contests
+        participant_qs = Participant.objects.filter(user=student, contest__in=contests_qs)
+        leaderboard_qs = Leaderboard.objects.filter(user=student, contest__in=contests_qs)
+
+        part_map = {p.contest_id: p for p in participant_qs}
+        lb_map = {l.contest_id: l for l in leaderboard_qs}
+
+        contests_details = []
+        for c in contests_qs:
+            max_marks = c.max_points or 0
+            part = part_map.get(c.id)
+            lb = lb_map.get(c.id)
+
+            student_marks = 0
+            attendance = 'Absent'
+            rank = None
+
+            if part:
+                student_marks = getattr(part, 'score', 0) or 0
+                attendance = 'Present'
+            if lb:
+                # leaderboard may store authoritative rank/score
+                student_marks = getattr(lb, 'score', student_marks) or student_marks
+                rank = getattr(lb, 'rank', None)
+                attendance = 'Present'
+
+            progress_pct = 0
+            if max_marks > 0:
+                try:
+                    progress_pct = round((student_marks / float(max_marks)) * 100, 2)
+                except Exception:
+                    progress_pct = 0
+
+            date_conducted = c.start_time or c.end_time or c.created_at
+
+            contests_details.append({
+                'id': c.id,
+                'title': c.name,
+                'date_conducted': date_conducted,
+                'max_marks': max_marks,
+                'student_marks': student_marks,
+                'attendance_status': attendance,
+                'rank': rank,
+                'progress_percentage': progress_pct
+            })
+
+        # Summary analytics for contests/tests
+        total_tests = contests_qs.count()
+        attempted_tests = sum(1 for d in contests_details if d['attendance_status'] == 'Present')
+        avg_score = 0
+        if attempted_tests > 0:
+            avg_score = round(sum(d['student_marks'] for d in contests_details if d['attendance_status'] == 'Present') / attempted_tests, 2)
+        attendance_pct = round((attempted_tests / total_tests) * 100, 2) if total_tests > 0 else 0
+        best = None
+        present_entries = [d for d in contests_details if d['attendance_status'] == 'Present']
+        if present_entries:
+            best_entry = max(present_entries, key=lambda x: x['student_marks'])
+            best = {'title': best_entry['title'], 'score': best_entry['student_marks'], 'rank': best_entry['rank']}
+
+        # time-series for charts
+        scores_trend = [{'date': d['date_conducted'], 'score': d['student_marks']} for d in sorted(contests_details, key=lambda x: x['date_conducted'] or datetime.min)]
+        attendance_ratio = {'present': attempted_tests, 'absent': total_tests - attempted_tests}
+
+        # Course breakdown
+        total = enrolled.count()
+        completed = enrolled.filter(progress='Completed').count()
+        ongoing = enrolled.filter(progress='Ongoing').count()
+        not_started = enrolled.filter(progress='Not Started').count()
+
+        response = {
+            'student': {
+                'id': student.id,
+                'name': student.first_name or student.username,
+                'email': student.email
+            },
+            'courses': courses,
+            'contests': contests_details,
+            'tests_summary': {
+                'total_tests': total_tests,
+                'tests_attempted': attempted_tests,
+                'average_score': avg_score,
+                'attendance_percentage': attendance_pct,
+                'best': best
+            },
+            'tests_time_series': {
+                'scores_trend': scores_trend,
+                'attendance_ratio': attendance_ratio
+            },
+            'performance': {
+                'average_score': avg_score,
+                'breakdown': {
+                    'completed': completed,
+                    'ongoing': ongoing,
+                    'not_started': not_started,
+                    'total': total
+                }
+            }
+        }
+        return Response(response, status=status.HTTP_200_OK)

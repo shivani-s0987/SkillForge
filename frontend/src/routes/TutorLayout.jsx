@@ -42,6 +42,8 @@ const TutorCategories = lazy(() =>
 const TutorContest = lazy(() =>
   import("../features/tutor/pages/contest/TutorContest")
 );
+const TutorStudent = lazy(() => import("@/features/tutor/pages/student/StudentDashboard"));
+const StudentDetail = lazy(() => import("@/features/tutor/pages/student/StudentDetail"));
 const TutorCreateContest = lazy(() =>
   import("../features/tutor/pages/contest/TutorCreateContest")
 );
@@ -99,6 +101,18 @@ const TutorLayout = () => {
                 path="courses"
                 element={
                   <ProtectedRoute element={<TutorCourse />} role={"tutor"} />
+                }
+              />
+              <Route
+                path="student"
+                element={
+                  <ProtectedRoute element={<TutorStudent />} role={"tutor"} />
+                }
+              />
+              <Route
+                path="student/:id"
+                element={
+                  <ProtectedRoute element={<StudentDetail />} role={"tutor"} />
                 }
               />
               <Route

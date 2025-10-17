@@ -44,8 +44,9 @@ const TutorSidebar = () => {
 
   const navItems = [
     { to: "/tutor", label: "Dashboard", icon: Home },
-    { to: "/tutor/courses", label: "Courses", icon: BookOpen },
-    { to: "/tutor/contest", label: "Contest", icon: Trophy },
+  { to: "/tutor/courses", label: "Courses", icon: BookOpen },
+  { to: "/tutor/student", label: "Student", icon: Users },
+  { to: "/tutor/contest", label: "Contest", icon: Trophy },
     { to: "/tutor/categories", label: "Categories", icon: Folder },
     { to: "/tutor/community", label: "Community", icon: Users },
     { to: "/tutor/profile", label: "Profile", icon: User },
