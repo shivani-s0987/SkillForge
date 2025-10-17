@@ -9,6 +9,10 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 import { formatDate } from "@/utils/format";
+import { useSelector } from 'react-redux'
+import Swal from 'sweetalert2'
+import api from '@/services/api'
+import { displayToastAlert } from '@/utils/displayToastAlert'
 
 const TutorContestDetails = () => {
   const { id } = useParams();
@@ -89,6 +93,12 @@ const TutorContestDetails = () => {
               : ""}
           </span>
         </div>
+        {/* Tutor-only Generate All button shown after contest end */}
+        {(contestDetails.end_time && new Date(contestDetails.end_time) < new Date()) && (
+          <div className="mb-4">
+            <GenerateAllButton />
+          </div>
+        )}
         <p className="text-gray-700">{contestDetails.description}</p>
       </div>
 
@@ -211,3 +221,39 @@ const TutorContestDetails = () => {
 };
 
 export default TutorContestDetails;
+
+const GenerateAllButton = () => {
+  const { user } = useSelector((state) => state.auth);
+
+  if (!user || (!user.is_staff && user.role !== 'tutor')) return null;
+
+  return (
+    <button
+      onClick={async () => {
+        const res = await Swal.fire({
+          title: 'Regenerate AI summaries for all contests?',
+          text: 'This will regenerate AI summaries for every contest. Continue?',
+          icon: 'warning',
+          showCancelButton: true,
+          confirmButtonText: 'Yes, regenerate'
+        })
+        if (res.isConfirmed) {
+          try {
+            const resp = await api.post('summarizedkeynotes/generate_all/')
+            if (resp.status === 202) {
+              displayToastAlert(202, 'Regeneration queued and running in background');
+            } else if (resp.status === 200) {
+              displayToastAlert(200, 'Regeneration completed');
+            }
+          } catch (err) {
+            console.error(err);
+            displayToastAlert(500, 'Failed to regenerate summaries');
+          }
+        }
+      }}
+      className="bg-yellow-500 text-white px-4 py-2 rounded hover:bg-yellow-600"
+    >
+      Generate AI Key Notes (All Contests)
+    </button>
+  )
+}

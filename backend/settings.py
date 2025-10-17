@@ -217,4 +217,16 @@ SUPABASE_BUCKET_NAME = os.getenv("SUPABASE_BUCKET_NAME", "learnora-media")
 # Stripe + Gemini
 SITE_URL = 'https://learnora1.vercel.app/'
 STRIPE_SECRET_KEY = env('STRIPE_SECRET')
-GEMINI_API_KEY = env('GEMINI_API_KEY')
+
+# Gemini / Generative AI configuration (optional)
+# These are optional; leave unset if you don't have Gemini credentials.
+GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
+GEMINI_BEARER_TOKEN = env('GEMINI_BEARER_TOKEN', default=None)
+GEMINI_MODEL_NAME = os.getenv("GEMINI_MODEL_NAME", "gemini-1.5-flash")
+# Optional: override API base (useful for enterprise endpoints)
+GEMINI_API_BASE = os.getenv("GEMINI_API_BASE", "https://generativelanguage.googleapis.com/v1beta")
+# Optional tuning
+GEMINI_RETRIES = env.int('GEMINI_RETRIES', default=1)
+# Timeout is read timeout in seconds; increase default to 60s to allow larger responses
+GEMINI_TIMEOUT = env.float('GEMINI_TIMEOUT', default=60.0)
+GEMINI_API_URL = f"{GEMINI_API_BASE}/models/{GEMINI_MODEL_NAME}:generateContent"

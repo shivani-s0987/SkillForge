@@ -38,6 +38,7 @@ const PaymentFailed = lazy(() =>
 const CourseVideoPlayer = lazy(() =>
   import("../features/courses/pages/CourseVideoPlayer")
 );
+const SummarizedKeyNotes = lazy(() => import("../features/contest/page/SummarizedKeyNotes"));
 
 const StudentRoutes = () => {
   return (
@@ -137,6 +138,11 @@ const StudentRoutes = () => {
               role={"student"}
             />
           }
+        />
+
+        <Route
+          path="/summarized-keynotes"
+          element={<ProtectedRoute element={<SummarizedKeyNotes />} role={"student"} />}
         />
 
         <Route

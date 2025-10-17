@@ -1,5 +1,6 @@
 from rest_framework import serializers 
 from .models import Contest, Question, Option, Participant, Submission, Leaderboard
+from .models import SummarizedKeyNote
 from course.serializers import CategorySerializer
 from users.api.user_serializers import UserSerializers
 from course.models import Category
@@ -162,6 +163,13 @@ class ContestSerializer(serializers.ModelSerializer):
 
         return super().create(validated_data)
 
+    def to_representation(self, instance):
+        # ensure summarized key note placeholders exist for questions
+        from .models import SummarizedKeyNote
+        for q in instance.questions.all():
+            SummarizedKeyNote.objects.get_or_create(contest=instance, question=q)
+        return super().to_representation(instance)
+
     def update(self, instance, validated_data):
         """Update an existing contest."""
         self.set_contest_status(validated_data)
@@ -244,3 +252,14 @@ class LeaderboardSerializer(serializers.ModelSerializer):
             "id": contest.id,
             "name": contest.name
         }
+
+
+class SummarizedKeyNoteSerializer(serializers.ModelSerializer):
+    question_text = serializers.SerializerMethodField(read_only=True)
+
+    class Meta:
+        model = SummarizedKeyNote
+        fields = ['id', 'contest', 'question', 'question_text', 'summary_text', 'generated_at']
+
+    def get_question_text(self, obj):
+        return obj.question.question_text if obj.question else None

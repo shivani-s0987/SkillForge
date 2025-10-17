@@ -4,6 +4,7 @@ from users.models import CustomUser
 from course.models import Category
 from base.base_models import BaseModel
 from django.utils.text import slugify
+from django.utils import timezone
 
 # Create your models here.
 
@@ -14,6 +15,12 @@ class Contest(BaseModel):
         ('scheduled', 'Scheduled'),
         ('ongoing', 'Ongoing'),
         ('finished', 'Finished'),
+    )
+    AI_SUMMARY_STATUS = (
+        ('pending', 'Pending'),
+        ('generating', 'Generating'),
+        ('ready', 'Ready'),
+        ('failed', 'Failed'),
     )
 
     tutor = models.ForeignKey(Tutor, on_delete=models.CASCADE, null=True, blank=True, related_name='contests')
@@ -29,6 +36,7 @@ class Contest(BaseModel):
     time_limit = models.DurationField(null=True, blank=True, help_text="Time limit for contest participation (e.g., 00:10:00 for 10 minutes).")
     status = models.CharField(choices=STATUS_CHOICES, max_length=10, null=True)
     participants = models.ManyToManyField(CustomUser, through='Participant', blank=True)
+    ai_summary_status = models.CharField(max_length=20, choices=AI_SUMMARY_STATUS, default='pending')
 
     def save(self, *args, **kwargs):
         """Override save method to automatically generate a unique slug based on the contest name."""
@@ -111,3 +119,20 @@ class Leaderboard(BaseModel):
     def __str__(self) -> str:
         """Return a string representation of the user's username, contest name, and rank."""
         return f"{self.user.username} - {self.contest.name} - Rank: {self.rank}"
+
+
+class SummarizedKeyNote(BaseModel):
+    """Stores an AI-generated concise summary / key note for a question within a contest."""
+
+    contest = models.ForeignKey(Contest, on_delete=models.CASCADE, related_name='summaries', null=True)
+    question = models.ForeignKey(Question, on_delete=models.CASCADE, related_name='summaries', null=True)
+    summary_text = models.TextField(blank=True, null=True)
+    generated_at = models.DateTimeField(default=timezone.now)
+    generated_by = models.ForeignKey(CustomUser, on_delete=models.SET_NULL, null=True, blank=True)
+
+    class Meta:
+        verbose_name = 'Summarized Key Note'
+        verbose_name_plural = 'Summarized Key Notes'
+
+    def __str__(self) -> str:
+        return f"Summary for Question {self.question.id} in Contest {self.contest.id}"

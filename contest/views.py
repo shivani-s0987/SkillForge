@@ -8,13 +8,23 @@ from django.db.models import Sum
 from django.core.cache import cache
 from rest_framework.permissions import AllowAny
 
-from .models import Contest, Question, Option, Participant, Leaderboard, Submission
+from .models import Contest, Question, Option, Participant, Leaderboard, Submission, SummarizedKeyNote
 from .serializers import (
     ContestSerializer,
     QuestionSerializer,
     ParticipantSerializer,
     SubmissionSerializer,
+    SummarizedKeyNoteSerializer,
 )
+from rest_framework.permissions import IsAuthenticated
+from rest_framework.viewsets import ReadOnlyModelViewSet
+from rest_framework.decorators import permission_classes, action
+from django.conf import settings
+import os
+import logging
+from .utils import summarize_question_obj
+
+logger = logging.getLogger(__name__)
 
 # Create your views here.
 
@@ -170,6 +180,21 @@ class SubmissionViewSet(ModelViewSet):
         participant.save()
 
         update_leaderboard(participant.contest)
+        # After leaderboard updated and participant completed, generate summaries synchronously
+        try:
+            from .tasks import generate_summaries_for_contest
+            try:
+                # Call synchronously so summaries are ready before returning
+                generate_summaries_for_contest(participant.contest.id, participant.user.id)
+            except Exception as e:
+                logger.exception('Synchronous summary generation failed: %s', e)
+                # fallback: try to dispatch to Celery if available
+                try:
+                    generate_summaries_for_contest.delay(participant.contest.id, participant.user.id)
+                except Exception as e2:
+                    logger.exception('Failed to dispatch Celery generation task: %s', e2)
+        except Exception:
+            logger.exception('Failed to import generate_summaries_for_contest task')
 
         return Response({'detail' : 'Contest completed successfully '}, status=status.HTTP_200_OK)
 
@@ -187,6 +212,108 @@ def update_leaderboard(contest):
             user=participant.user,
             defaults={'score': participant.score, 'rank': rank}
         )
+
+
+class SummarizedKeyNoteViewSet(ReadOnlyModelViewSet):
+    """Read-only viewset to list/fetch generated summaries and an action to trigger generation."""
+    queryset = None
+    serializer_class = SummarizedKeyNoteSerializer
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        contest_id = self.request.query_params.get('contest_id')
+        if not contest_id:
+            return []
+        return SummarizedKeyNote.objects.filter(contest_id=contest_id).select_related('question').order_by('question__id')
+
+    @action(detail=False, methods=['post'], url_path='generate')
+    def generate(self, request):
+        """Generate summaries for a contest's questions and save them.
+
+        Only tutors of the contest or enrolled students should be able to trigger; we allow tutors and staff.
+        """
+        contest_id = request.data.get('contest_id')
+        if not contest_id:
+            return Response({'detail': 'contest_id is required'}, status=status.HTTP_400_BAD_REQUEST)
+
+        try:
+            contest = Contest.objects.get(id=contest_id)
+        except Contest.DoesNotExist:
+            return Response({'detail': 'Contest not found'}, status=status.HTTP_404_NOT_FOUND)
+
+        # permission: only staff, contest tutor, or students who participated can trigger
+        user = request.user
+        is_tutor = hasattr(user, 'tutor_profile') and contest.tutor and contest.tutor.user_id == user.id
+        if not (user.is_staff or is_tutor):
+            # allow students only if they participated in contest
+            participated = Participant.objects.filter(contest=contest, user=user).exists()
+            if not participated:
+                return Response({'detail': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # gather notes text: all module notes files content referenced by course modules
+        notes_texts = []
+        for module in contest.category.courses.first().modules.all() if contest.category and contest.category.courses.exists() else []:
+            # if module.notes is a file, try to read small text content; otherwise ignore
+            try:
+                if module.notes and hasattr(module.notes, 'open'):
+                    with module.notes.open('r', encoding='utf-8', errors='ignore') as f:
+                        notes_texts.append(f.read())
+            except Exception:
+                continue
+
+        # mark contest as generating
+        try:
+            contest.ai_summary_status = 'generating'
+            contest.save()
+        except Exception:
+            pass
+
+        # for each question, (re)generate and save a summary
+        summaries = []
+        for q in contest.questions.all():
+            summary_obj, created = SummarizedKeyNote.objects.get_or_create(contest=contest, question=q)
+            # Always regenerate and overwrite summary_text so content is updated
+            generated = summarize_question_obj(q, notes_texts)
+            summary_obj.summary_text = generated
+            summary_obj.generated_by = user
+            summary_obj.save()
+            summaries.append(summary_obj)
+
+        # mark ready
+        try:
+            contest.ai_summary_status = 'ready'
+            contest.save()
+        except Exception:
+            pass
+
+        serializer = SummarizedKeyNoteSerializer(summaries, many=True)
+        return Response(serializer.data, status=status.HTTP_200_OK)
+
+    @action(detail=False, methods=['post'], url_path='generate_all')
+    def generate_all(self, request):
+        """Staff-only: regenerate summaries for all contests.
+
+        This loops through all contests and calls the same summarizer. Intended
+        for admins to trigger full-system generation after new notes are uploaded.
+        """
+        user = request.user
+        if not user.is_staff:
+            return Response({'detail': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+        # Use Django management command to regenerate summaries for all contests
+        try:
+            # Dispatch to Celery worker to avoid blocking the web request
+            from .tasks import regenerate_summaries_command
+            regenerate_summaries_command.delay(user.id if user else None)
+            return Response({'detail': 'Regeneration queued; running in background'}, status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            logger.exception('Failed to queue regenerate_summaries task: %s', e)
+            return Response({'detail': 'Failed to queue regeneration', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+
+def call_summarizer(prompt: str) -> str:
+    # Deprecated - use summarize_question_obj in contest.utils
+    return None
 
 
 @api_view(['GET'])

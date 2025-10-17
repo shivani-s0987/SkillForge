@@ -8,6 +8,7 @@ import useFetchContestDetails from "@/features/tutor/hooks/useFetchContestDetail
 import { displayToastAlert } from "@/utils/displayToastAlert";
 import { useSelector } from "react-redux";
 import Swal from "sweetalert2";
+import { differenceInSeconds } from 'date-fns'
 
 const ContestDetailsPage = () => {
   const { id } = useParams();
@@ -55,6 +56,12 @@ const ContestDetailsPage = () => {
               <p className="text-emerald-100">{contestDetails.description}</p>
             </div>
             <div className="p-6">
+              <div className="flex items-center justify-between mb-4">
+                <div>
+                  <span className="text-sm text-gray-600">AI Key Notes:</span>
+                  <span className="ml-2 font-semibold text-sm text-indigo-600">{contestDetails.ai_summary_status || 'pending'}</span>
+                </div>
+              </div>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4 mb-6">
                 <InfoItem
                   icon={<Calendar className="w-5 h-5" />}
@@ -132,6 +139,49 @@ const ContestDetailsPage = () => {
                     ? "Completed"
                     : "Participate Now"}
                 </button>
+              )}
+              {contestDetails.is_participated && (
+                <div className="mt-4">
+                  <button
+                    onClick={() => navigate(`/summarized-keynotes?contest_id=${contestDetails.id}`)}
+                    className="w-full bg-indigo-600 text-white px-6 py-3 rounded-lg shadow hover:bg-indigo-700 transition duration-300"
+                  >
+                    View AI Key Notes
+                  </button>
+                </div>
+              )}
+
+              {/* Tutor-only: Generate for all contests after contest end */}
+              {user && (user.is_staff || user.role === 'tutor') && new Date(contestDetails.end_time) < new Date() && (
+                <div className="mt-4">
+                  <button
+                    onClick={async () => {
+                      const res = await Swal.fire({
+                        title: 'Generate AI Key Notes for all contests?',
+                        text: 'This will regenerate AI summaries for all contests. Continue?',
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonText: 'Yes, generate',
+                      });
+                      if (res.isConfirmed) {
+                        try {
+                          const resp = await api.post('summarizedkeynotes/generate_all/');
+                          if (resp.status === 200) {
+                            displayToastAlert(200, 'Generation started/completed for all contests');
+                            // refresh contest details
+                            window.location.reload();
+                          }
+                        } catch (err) {
+                          console.error(err);
+                          displayToastAlert(500, 'Failed to generate summaries for all contests');
+                        }
+                      }
+                    }}
+                    className="w-full bg-yellow-500 text-white px-6 py-3 rounded-lg shadow hover:bg-yellow-600 transition duration-300"
+                  >
+                    Generate AI Key Notes (All Contests)
+                  </button>
+                </div>
               )}
             </div>
           </div>
