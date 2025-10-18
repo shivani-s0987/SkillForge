@@ -545,6 +545,99 @@ Production: https://your-domain.com/api/v1/
 | `POST` | `/contests/{id}/submit/` | Submit answers |
 | `GET` | `/contests/{id}/leaderboard/` | Get leaderboard |
 
+## 📨 Automated Contest Result Emails
+
+This project can automatically analyze contest results and email each student a personalized performance report when a contest ends. No Celery/Redis is required.
+
+### What gets sent
+
+- **Attendance**: Present/Absent
+- **Marks obtained** and **progress %**
+- **Rank** (tie-aware)
+- **Average score** for the contest
+- **Top score** among all students
+- **Performance note** (e.g., “Excellent performance!”)
+
+### How it works
+
+- When a `Contest` is marked `finished`, `notify_students_on_test_completion(contest_id)` enqueues one `EmailLog` per student.
+- The queue is processed by the management command `process_email_queue` with robust pacing and retry/backoff.
+- A scheduler command `scan_ended_contests` finds contests whose `end_time` has passed, marks them `finished`, and enqueues emails. You can optionally process the queue in the same run.
+
+### Configuration (settings.py)
+
+```python
+# Email backend
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'your_email@example.com'
+EMAIL_HOST_PASSWORD = 'your_app_password'
+DEFAULT_FROM_EMAIL = EMAIL_HOST_USER
+
+# Optional pacing/tuning
+EMAIL_SEND_DELAY_SECONDS = 3  # delay between sends in process_email_queue
+EMAIL_MIN_GAP_PER_RECIPIENT_SECONDS = 5
+EMAIL_INITIAL_QUEUE_DELAY_SECONDS = 0
+EMAIL_RECIPIENT_COOLDOWN_MINUTES = 30
+EMAIL_RECIPIENT_RECEIVING_RATE_BLOCK_MINUTES = 1440
+EMAIL_SEND_USE_THREADPOOL = True  # threadpool used only when sending ad-hoc via services
+
+# Optional roster hook to include additional recipients
+# CONTEST_ROSTER_BACKEND = 'path.to.module.get_recipient_ids'
+```
+
+### Commands
+
+```bash
+# 1) Mark ended contests finished and enqueue emails
+python manage.py scan_ended_contests --limit 50
+
+# 2) Process pending emails (send)
+python manage.py process_email_queue --limit 200 --delay-seconds 0
+
+# Combined: scan and process immediately
+python manage.py scan_ended_contests --process --process-limit 200 --delay-seconds 0
+
+# Manually enqueue for a specific contest
+python manage.py send_contest_emails <contest_id>
+
+# Resend only failed emails for a contest
+python manage.py send_contest_emails <contest_id> --resend-failed
+```
+
+### Scheduling
+
+- Linux (cron):
+
+```
+*/5 * * * * /path/to/venv/bin/python /path/to/project/manage.py scan_ended_contests --process --process-limit 200 --delay-seconds 0 >> /var/log/contest_mail.log 2>&1
+```
+
+- Windows (Task Scheduler):
+
+1. Open Task Scheduler → Create Basic Task → Trigger: Daily/Repeat every 5 minutes (Advanced settings).
+2. Action: Start a Program.
+3. Program/script: `C:\Path\To\python.exe`
+4. Add arguments: `C:\Path\To\project\manage.py scan_ended_contests --process --process-limit 200 --delay-seconds 0`
+5. Start in: `C:\Path\To\project`
+
+### Testing locally
+
+```python
+from django.test import override_settings
+from contest.services import notify_students_on_test_completion
+
+@override_settings(EMAIL_BACKEND='django.core.mail.backends.locmem.EmailBackend', DEFAULT_FROM_EMAIL='no-reply@test.local')
+def test_flow():
+    notify_students_on_test_completion(contest_id)
+    # then call the management command
+    # call_command('process_email_queue', limit=50, delay_seconds=0)
+```
+
+HTML template: `contest/templates/contest/email/contest_report.html`.
+
 ### Community Endpoints
 
 | Method | Endpoint | Description |

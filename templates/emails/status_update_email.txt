@@ -1,0 +1,11 @@
+SkillForge - Tutor Application Update
+
+Hello {{ tutor_name }},
+
+{{ message }}
+
+Status: {{ status_message }}
+
+Thank you for being a part of SkillForge.
+
+- Team SkillForge

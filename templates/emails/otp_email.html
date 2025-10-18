@@ -1,0 +1,27 @@
+<!DOCTYPE html>
+<html>
+  <body style="background-color:#f6f9fc; font-family:Arial, sans-serif; padding:20px;">
+    <div style="max-width:600px; margin:auto; background:#ffffff; padding:25px; border-radius:10px; box-shadow:0 2px 10px rgba(0,0,0,0.05);">
+      <div style="text-align:center; margin-bottom:20px;">
+        <h2 style="color:#2563eb; margin:0;">SkillForge</h2>
+        <p style="color:#555;">Secure Verification System</p>
+      </div>
+
+      <p style="color:#333;">Hello {{ email }},</p>
+
+      <p style="font-size:15px;">Your One-Time Password (OTP) for SkillForge verification is:</p>
+
+      <div style="text-align:center; margin:20px 0;">
+        <h1 style="background:#2563eb; color:white; display:inline-block; padding:10px 25px; border-radius:8px; letter-spacing:3px;">
+          {{ otp }}
+        </h1>
+      </div>
+
+      <p>This OTP will expire soon. Please do not share it with anyone for your account’s safety.</p>
+
+      <hr style="margin:25px 0; border:none; border-top:1px solid #eaeaea;"/>
+
+      <p style="font-size:13px; color:#888;">Thank you,<br>Team SkillForge</p>
+    </div>
+  </body>
+</html>

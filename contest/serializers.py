@@ -92,6 +92,7 @@ class ContestSerializer(serializers.ModelSerializer):
 
     class Meta:
         model = Contest
+        # include auto_email_results so API/admin can control it
         fields = '__all__'
 
     def validate(self, attrs):

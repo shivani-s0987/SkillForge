@@ -1,0 +1,10 @@
+SkillForge Verification
+
+Hello {{ email }},
+
+Your One-Time Password (OTP) is: {{ otp }}
+
+Please use this code to verify your SkillForge account.
+Do not share this code with anyone.
+
+- Team SkillForge

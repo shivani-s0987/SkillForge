@@ -8,6 +8,8 @@ from django.db.models.functions import TruncMonth
 from rest_framework import generics, status, viewsets, views
 from rest_framework.response import Response
 from rest_framework.views import APIView
+from django.core.mail import EmailMultiAlternatives
+from django.template.loader import render_to_string
 
 from .models import Tutor, Skill, Education, Experience
 from users.models import CustomUser
@@ -140,25 +142,46 @@ class TutorDetails(generics.RetrieveUpdateAPIView):
 
     def send_change_status_email(self, tutor, new_status):
         """
-        Send email to tutor  when their application status change
-        
-        Args:
-            tutor (Tutor): The tutor object
-            new_status (str): The new status of the tutor's application
+        Send a professional HTML email to tutor when their application status changes.
         """
         subject = 'Update on Your Application Status'
+        from_email = settings.DEFAULT_FROM_EMAIL
+        recipient = [tutor.user.email]
+
+        # Define message context
         if new_status == 'Verified':
-            message = 'Congratulations! Your application has been accepted'
+            message = "Congratulations! Your application has been accepted."
+            status_message = "Accepted ✅"
+            highlight_color = "#16a34a"  # green
         elif new_status == 'Rejected':
-            message = "We're sorry to inform you that your application has been rejected"
-        
-        send_mail(
-            subject,
-            message,
-            settings.DEFAULT_FROM_EMAIL,
-            [tutor.user.email],  
-            fail_silently=False,
-        )
+            message = "We're sorry to inform you that your application has been rejected."
+            status_message = "Rejected ❌"
+            highlight_color = "#dc2626"  # red
+        else:
+            message = f"Your application status has been updated to {new_status}."
+            status_message = new_status
+            highlight_color = "#2563eb"  # blue (default)
+
+        context = {
+            "tutor_name": tutor.user.get_full_name() or tutor.user.username,
+            "message": message,
+            "status_message": status_message,
+            "highlight_color": highlight_color,
+        }
+
+        # Render templates
+        text_content = render_to_string("emails/status_update_email.txt", context)
+        html_content = render_to_string("emails/status_update_email.html", context)
+
+        # Send both text and HTML versions
+        email = EmailMultiAlternatives(subject, text_content, from_email, recipient)
+        email.attach_alternative(html_content, "text/html")
+
+        try:
+            email.send()
+            print(f"✅ Status update email sent to {recipient}")
+        except Exception as e:
+            print(f"❌ Failed to send status update email to {recipient}: {e}")
     
 
 class MyProfileViewSets(viewsets.ModelViewSet):

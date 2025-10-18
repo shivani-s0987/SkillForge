@@ -1,0 +1,141 @@
+<!doctype html>
+<html>
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Contest Report</title>
+    <style>
+      body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial; background: #f7f7fb; margin:0; padding:0; }
+      .container { max-width: 680px; margin: 28px auto; background: #fff; border-radius: 8px; overflow: hidden; box-shadow: 0 6px 18px rgba(0,0,0,0.06); }
+      .header { background: #6B21A8; color: #fff; padding: 20px 28px; display:flex; align-items:center; gap:12px }
+      .logo { width:48px; height:48px; border-radius:8px; background:#fff; display:flex; align-items:center; justify-content:center; font-weight:700; color:#6B21A8 }
+      .title { font-size:18px; font-weight:700 }
+      .content { padding: 22px 28px; color:#1f2937 }
+      .greeting { margin-bottom: 8px }
+      .row { display:flex; justify-content:space-between; padding:10px 0; border-bottom:1px solid #f1f1f6 }
+      .muted { color:#6b7280 }
+      .summary { display:flex; gap:10px; flex-wrap:wrap; margin:12px 0 }
+      .card { flex:1 1 45%; background:#fbf8ff; border:1px solid #f3e8ff; padding:12px; border-radius:6px }
+      .footer { padding: 18px 28px; background:#fafafa; color:#6b7280; font-size:13px }
+      .cta { display:inline-block; margin-top:12px; background:#6B21A8; color:#fff; padding:10px 14px; border-radius:6px; text-decoration:none }
+      table { width:100%; border-collapse:collapse; margin-top:12px }
+      th, td { padding:10px; text-align:left; border-bottom:1px solid #f3f4f6 }
+      .small { font-size:13px }
+      .center { text-align:center }
+    </style>
+  </head>
+  <body>
+    <div class="container">
+      <div class="header">
+        <div class="logo">🎀</div>
+        <div>
+          <div class="title">SkillForge — Performance Summary</div>
+          <div class="small">Automated contest summary</div>
+        </div>
+      </div>
+      <div class="content">
+        <p class="greeting">Hi {{ student.first_name|default:student.username }},</p>
+        <p class="muted">Here's your performance summary for the contest <strong>{{ contest.name }}</strong> conducted on <strong>{{ date_conducted|date:'d M Y, H:i' }}</strong>.</p>
+
+        <div class="summary">
+          <div class="card">
+            <div class="small muted">Maximum Marks</div>
+            <div style="font-weight:700">{{ max_marks }}</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Top Score</div>
+            <div style="font-weight:700">{% if top_score is not None %}{{ top_score }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Your Marks</div>
+            <div style="font-weight:700">{{ marks }}</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Attendance</div>
+            <div style="font-weight:700">{{ attendance }}</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Rank</div>
+            <div style="font-weight:700">{% if rank %}{{ rank }}{% else %}—{% endif %}</div>
+          </div>
+          <div class="card">
+            <div class="small muted">Progress</div>
+            <div style="font-weight:700">{{ progress_percent }}%</div>
+          </div>
+        </div>
+
+        <h4 style="margin-top:18px">Class Summary</h4>
+        <div class="row small">
+          <div>Average Score</div>
+          <div class="muted">{{ avg_score }}</div>
+        </div>
+        <div class="row small">
+          <div>Top Score</div>
+          <div class="muted">{% if top_score is not None %}{{ top_score }}{% else %}—{% endif %}</div>
+        </div>
+        <div class="row small">
+          <div>Tutor</div>
+          <div class="muted">{% if tutor_name %}{{ tutor_name }}{% else %}—{% endif %}</div>
+        </div>
+
+        <h4 style="margin-top:18px">Details</h4>
+        <table>
+          <thead>
+            <tr>
+              <th>Field</th>
+              <th class="center">Value</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>Contest</td>
+              <td class="center">{{ contest.name }}</td>
+            </tr>
+            <tr>
+              <td>Date Conducted</td>
+              <td class="center">{{ date_conducted|date:'d M Y, H:i' }}</td>
+            </tr>
+            <tr>
+              <td>Max Marks</td>
+              <td class="center">{{ max_marks }}</td>
+            </tr>
+            <tr>
+              <td>Top Score</td>
+              <td class="center">{% if top_score is not None %}{{ top_score }}{% else %}—{% endif %}</td>
+            </tr>
+            <tr>
+              <td>Your Marks</td>
+              <td class="center">{{ marks }}</td>
+            </tr>
+            <tr>
+              <td>Attendance</td>
+              <td class="center">{{ attendance }}</td>
+            </tr>
+            <tr>
+              <td>Rank</td>
+              <td class="center">{% if rank %}{{ rank }}{% else %}—{% endif %}</td>
+            </tr>
+            <tr>
+              <td>Progress</td>
+              <td class="center">{{ progress_percent }}%</td>
+            </tr>
+          </tbody>
+        </table>
+
+        <p class="small muted" style="margin-top:14px">If you have any questions about your results, please reach out to your tutor or the SkillForge support team.</p>
+
+        {% if performance_summary %}
+          <div style="margin-top:12px; padding:12px; background:#f8fafc; border:1px solid #eef2f7; border-radius:6px">
+            <div class="small muted" style="margin-bottom:6px">Performance Note</div>
+            <div style="font-weight:600; color:#111827">{{ performance_summary }}</div>
+          </div>
+        {% endif %}
+
+        <a href="{{ request.site_url|default:'#' }}" class="cta">Visit SkillForge</a>
+      </div>
+      <div class="footer">
+        © {{ now|date:'Y' }} SkillForge — Empowering learners • <span style="color:#6B21A8; font-weight:600">skillforge@example.com</span>
+      </div>
+    </div>
+  </body>
+</html>
