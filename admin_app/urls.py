@@ -6,6 +6,8 @@ from .views import (
     RequestedCategory,
     AdminDashboardView,
     AdminSalesReport,
+    AdminStudentAnalytics,
+    AdminStudentBlock,
 )
 
 # Initialize the DefaultRouter for registering viewsets
@@ -25,4 +27,6 @@ urlpatterns = [
     # Endpoint for managing students (list, block/unblock)
     path('students/', StudentManageView.as_view(), name='student-list'),
     path('students/<int:id>', StudentManageView.as_view(), name='student-block'),
+    path('admin/students/<int:pk>/analytics/', AdminStudentAnalytics.as_view(), name='admin-student-analytics'),
+    path('admin/students/<int:pk>/block/', AdminStudentBlock.as_view(), name='admin-student-block'),
 ]

@@ -6,10 +6,13 @@ import { Link } from "react-router-dom";
 import { ChevronRightIcon, HomeIcon } from "lucide-react";
 import { displayToastAlert } from "@/utils/displayToastAlert";
 import TableSkeleton from "@/skeleton/TableSkeleton";
+import AdminStudentAnalytics from "../components/AdminStudentAnalytics";
 
 const AdminStudent = () => {
   const { students, refetch, loading } = useFetchStudent();
   const [searchQuery, setSearchQuery] = useState("");
+  const [selectedStudent, setSelectedStudent] = useState(null);
+  const [showAnalytics, setShowAnalytics] = useState(false);
 
   const handleBlock = async (id, current_status) => {
     try {
@@ -134,7 +137,7 @@ const AdminStudent = () => {
                             )
                           : "N/A"}
                       </td>
-                      <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                        <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium space-x-2">
                         <button
                           onClick={() =>
                             handleBlock(student.id, student.is_active)
@@ -147,6 +150,12 @@ const AdminStudent = () => {
                         >
                           {student.is_active ? "Block" : "Unblock"}
                         </button>
+                        <button
+                          onClick={() => { setSelectedStudent(student); setShowAnalytics(true); }}
+                          className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold py-2 px-4 rounded transition duration-300 ease-in-out"
+                        >
+                          View Analytics
+                        </button>
                       </td>
                     </tr>
                   ))}
@@ -155,6 +164,9 @@ const AdminStudent = () => {
             </div>
           </div>
         </main>
+      )}
+      {showAnalytics && selectedStudent && (
+        <AdminStudentAnalytics studentId={selectedStudent.id} onClose={() => setShowAnalytics(false)} />
       )}
     </>
   );

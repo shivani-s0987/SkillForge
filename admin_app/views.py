@@ -20,6 +20,12 @@ from base.custom_permissions import IsAdmin, IsTutor
 from contest.models import Leaderboard
 from contest.serializers import LeaderboardSerializer
 from user_profile.serializers import CourseSalesSerializer
+from django.shortcuts import get_object_or_404
+from contest.models import Contest, Participant
+try:
+    from admin_app.utils import broadcast_student_analytics
+except Exception:
+    broadcast_student_analytics = None
 
 
 # View for managing student accounts
@@ -190,3 +196,117 @@ class AdminSalesReport(ViewSet):
                 return Response({"error": "Invalid date format"}, status=status.HTTP_400_BAD_REQUEST)
         else:
             return Response({"error": "Missing 'start' or 'end' date"}, status=status.HTTP_400_BAD_REQUEST)
+
+
+class AdminStudentAnalytics(APIView):
+    permission_classes = [IsAdmin]
+
+    def get(self, request, pk):
+        # Return admin-level analytics for a student
+        user = get_object_or_404(CustomUser, pk=pk)
+
+        data = {
+            'id': user.id,
+            'name': user.first_name or user.username,
+            'email': user.email,
+            'joined_date': user.date_joined,
+            'last_login': user.last_login,
+            'status': 'Active' if user.is_active else 'Blocked'
+        }
+
+        enrolled = StudentCourseProgress.objects.filter(student=user).select_related('course')
+        courses = []
+        for e in enrolled:
+            pending_lessons = max(0, 5 - (e.watch_time // 10))
+            courses.append({
+                'title': e.course.title,
+                'progress': e.progress,
+                'pending_lessons': pending_lessons
+            })
+        data['courses'] = courses
+
+        contests_qs = Contest.objects.all().order_by('-start_time')
+        participant_qs = Participant.objects.filter(user=user, contest__in=contests_qs)
+        lb_qs = Leaderboard.objects.filter(user=user, contest__in=contests_qs)
+        part_map = {p.contest_id: p for p in participant_qs}
+        lb_map = {l.contest_id: l for l in lb_qs}
+
+        contests = []
+        for c in contests_qs:
+            max_marks = c.max_points or 0
+            p = part_map.get(c.id)
+            lb = lb_map.get(c.id)
+            student_marks = 0
+            attendance = 'Absent'
+            rank = None
+            if p:
+                student_marks = getattr(p, 'score', 0) or 0
+                attendance = 'Present'
+            if lb:
+                student_marks = getattr(lb, 'score', student_marks) or student_marks
+                rank = getattr(lb, 'rank', None)
+                attendance = 'Present'
+            progress_pct = 0
+            if max_marks > 0:
+                try:
+                    progress_pct = round((student_marks / float(max_marks)) * 100, 2)
+                except Exception:
+                    progress_pct = 0
+
+            contests.append({
+                'id': c.id,
+                'title': c.name,
+                'date_conducted': c.start_time,
+                'max_marks': max_marks,
+                'student_marks': student_marks,
+                'attendance_status': attendance,
+                'rank': rank,
+                'progress_percentage': progress_pct
+            })
+
+        data['contests'] = contests
+
+        total_tests = contests_qs.count()
+        attempted = sum(1 for ct in contests if ct['attendance_status'] == 'Present')
+        avg_score = 0
+        if attempted:
+            avg_score = round(sum(ct['student_marks'] for ct in contests if ct['attendance_status'] == 'Present') / attempted, 2)
+        attendance_pct = round((attempted / total_tests) * 100, 2) if total_tests else 0
+        best_rank = None
+        present = [ct for ct in contests if ct['attendance_status'] == 'Present' and ct['rank'] is not None]
+        if present:
+            best_rank = min((ct['rank'] for ct in present if ct['rank'] is not None), default=None)
+
+        data['summary'] = {
+            'total_tests': total_tests,
+            'attempted': attempted,
+            'average_score': avg_score,
+            'attendance_percentage': attendance_pct,
+            'best_rank': best_rank
+        }
+
+        return Response(data)
+
+
+class AdminStudentBlock(APIView):
+    permission_classes = [IsAdmin]
+
+    def patch(self, request, pk):
+        user = get_object_or_404(CustomUser, pk=pk)
+        is_active = request.data.get('is_active')
+        if is_active is None:
+            return Response({'error': 'is_active required'}, status=status.HTTP_400_BAD_REQUEST)
+        user.is_active = bool(is_active)
+        user.save()
+        # Broadcast status change to admin real-time analytics channel
+        try:
+            if broadcast_student_analytics:
+                payload = {
+                    'user_id': user.id,
+                    'is_active': user.is_active,
+                    'type': 'status_change'
+                }
+                broadcast_student_analytics(user.id, payload)
+        except Exception:
+            pass
+        return Response({'success': True, 'is_active': user.is_active})

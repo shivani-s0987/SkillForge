@@ -23,6 +23,10 @@ from django.conf import settings
 import os
 import logging
 from .utils import summarize_question_obj
+try:
+    from admin_app.utils import broadcast_student_analytics
+except Exception:
+    broadcast_student_analytics = None
 
 logger = logging.getLogger(__name__)
 
@@ -212,6 +216,19 @@ def update_leaderboard(contest):
             user=participant.user,
             defaults={'score': participant.score, 'rank': rank}
         )
+        # Broadcast update for this participant to admin channels
+        try:
+            if broadcast_student_analytics:
+                # Prepare minimal analytics payload
+                payload = {
+                    'user_id': participant.user.id,
+                    'contest_id': contest.id,
+                    'score': participant.score,
+                    'rank': rank,
+                }
+                broadcast_student_analytics(participant.user.id, payload)
+        except Exception:
+            pass
 
 
 class SummarizedKeyNoteViewSet(ReadOnlyModelViewSet):
