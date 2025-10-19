@@ -14,6 +14,7 @@ urlpatterns = [
     path('', include('community.urls')),
     path('', include('contest.urls')),
     path('', include('chatbot.urls')),
+   
     
 ]
 

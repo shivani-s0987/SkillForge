@@ -1,4 +1,15 @@
 from django.conf import settings
+import stripe
+from django.conf import settings
+from django.shortcuts import get_object_or_404
+from django.db import transaction
+from rest_framework.views import APIView
+from rest_framework.response import Response
+from rest_framework import status
+from datetime import datetime, timedelta
+
+from course.models import Course
+from users.models import CustomUser
 from django.shortcuts import redirect
 from .models import Category, Course, Module, StudentCourseProgress, Review, Transaction, Note
 from users.models import CustomUser
@@ -464,22 +475,20 @@ class CoursePurchaseView(APIView):
                 'error' : 'Something went wrong when create stripe checkout session'
             }, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
-
-# Define the view for handling successful payments
 class PaymentSuccess(APIView):
     """
-    API view to handle successful payments and grant course access.
+    Handle successful payments from frontend (React PaymentSuccess.jsx)
+    Idempotent: repeated requests with same session_id will not create duplicates
     """
+
     def post(self, request, *args, **kwargs):
-        """
-        Handle successful payment notifications and update course access for the user.
-        """
         data = request.data
         course_id = data.get('course_id')
         user_id = data.get('user_id')
         access_type = data.get('access_type')
         session_id = data.get('session_id')
 
+        # Validate parameters
         if not course_id or not user_id or not access_type or not session_id:
             return Response({'error': 'Incomplete payment information'}, status=status.HTTP_400_BAD_REQUEST)
 
@@ -488,18 +497,27 @@ class PaymentSuccess(APIView):
                 course = Course.objects.get(slug=course_id)
                 user = CustomUser.objects.get(id=user_id)
 
-                existing_progress = StudentCourseProgress.objects.filter(student=user, course=course).first()
-                if existing_progress and access_type == 'Rental' and existing_progress.access_expiry_date and existing_progress.access_expiry_date > datetime.now().date():
-                    return Response({'message': 'User already has access to this course'}, status=status.HTTP_200_OK)
-                    
+                # ✅ Idempotency check
+                existing_transaction = Transaction.objects.filter(reference_id=session_id).first()
+                if existing_transaction:
+                    return Response({
+                        'message': 'Payment already processed',
+                        'transaction_id': existing_transaction.id
+                    }, status=status.HTTP_200_OK)
 
-                # Set access expiry date based on rental duration
+                # Determine access expiry
                 access_expiry_date = None
                 if access_type == 'Rental':
                     rental_duration_days = int(course.rental_duration)
                     access_expiry_date = datetime.now().date() + timedelta(days=rental_duration_days)
 
-                 # Create transaction record
+                # ✅ Check for existing course progress
+                existing_progress = StudentCourseProgress.objects.filter(student=user, course=course).first()
+
+                if access_type == 'Rental' and existing_progress and existing_progress.access_expiry_date and existing_progress.access_expiry_date > datetime.now().date():
+                    return Response({'message': 'User already has access to this course'}, status=status.HTTP_200_OK)
+
+                # ✅ Create transaction
                 Transaction.objects.create(
                     user=user,
                     course=course,
@@ -510,15 +528,21 @@ class PaymentSuccess(APIView):
                     access_expiry_date=access_expiry_date
                 )
 
-                # Create student course progress record
-                StudentCourseProgress.objects.create(
-                    student=user,
-                    course=course,
-                    progress='Not Started',
-                    access_type=access_type,
-                    access_expiry_date=access_expiry_date
-                )
+                # ✅ Create or update course progress
+                if existing_progress:
+                    existing_progress.access_type = access_type
+                    existing_progress.access_expiry_date = access_expiry_date
+                    existing_progress.save()
+                else:
+                    StudentCourseProgress.objects.create(
+                        student=user,
+                        course=course,
+                        progress='Not Started',
+                        access_type=access_type,
+                        access_expiry_date=access_expiry_date
+                    )
 
+                # ✅ Update course enrollment count
                 course.total_enrollment += 1
                 course.save()
 
@@ -529,9 +553,7 @@ class PaymentSuccess(APIView):
         except CustomUser.DoesNotExist:
             return Response({'error': 'User not found'}, status=status.HTTP_404_NOT_FOUND)
         except Exception as e:
-            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)
-
-        
+            return Response({'error': str(e)}, status=status.HTTP_400_BAD_REQUEST)        
 
 # Define the viewset for managing reviews
 class ReviewViewSet(ModelViewSet):

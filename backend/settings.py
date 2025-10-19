@@ -145,6 +145,7 @@ CSRF_TRUSTED_ORIGINS = [
     'https://learnora.muhammeddanish.site',
     'https://www.learnora.muhammeddanish.site'
 ]
+FRONTEND_URL = "http://localhost:3000"
 
 # Email
 EMAIL_BACKEND = env('EMAIL_BACKEND')
@@ -215,7 +216,7 @@ SUPABASE_SERVICE_KEY = os.getenv("SUPABASE_SERVICE_KEY")
 SUPABASE_BUCKET_NAME = os.getenv("SUPABASE_BUCKET_NAME", "learnora-media")
 
 # Stripe + Gemini
-SITE_URL = 'https://learnora1.vercel.app/'
+SITE_URL = "http://127.0.0.1:8000/"
 STRIPE_SECRET_KEY = env('STRIPE_SECRET')
 
 # Gemini / Generative AI configuration (optional)
