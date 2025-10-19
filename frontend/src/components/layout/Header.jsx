@@ -54,11 +54,7 @@ function Header() {
         <div className="flex justify-between h-16">
           <div className="flex items-center flex-1">
             <Link to="/" className="flex-shrink-0">
-              <img
-                src="/logo.png"
-                alt="SkillForge Logo"
-                className="h-10 w-auto"
-              />
+              <h2 className="text-4xl font-bold text-indigo-600">SKILLFORGE</h2>
             </Link>
             <div className="hidden md:ml-6 md:flex md:space-x-8 flex-1 justify-center">
               {navItems.map((item) => (

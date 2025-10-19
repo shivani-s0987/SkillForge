@@ -18,7 +18,7 @@ const FeatureCard = ({ title, description }) => (
 
 const OnlineLearningSection = () => {
   return (
-    <div className="bg-white min-h-screen">
+    <div className="bg-white min-h-auto">
       <div className="max-w-6xl mx-auto px-4 py-12">
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
           <div>
@@ -43,9 +43,9 @@ const OnlineLearningSection = () => {
               />
             </div>
           </div>
-          <div className="relative mt-12 lg:mt-0">
+          <div className="relative mt-10 lg:mt-0">
             <div className="bg-gray-50 rounded-lg h-full relative overflow-hidden">
-              <div className="absolute top-4 left-4 right-4 bg-white p-4 rounded-lg shadow-sm z-10">
+              <div className="absolute top-6 left-4 right-4 bg-white p-4 rounded-lg shadow-sm z-10">
                 <div className="flex items-center mb-2">
                   <svg
                     className="w-5 h-5 text-indigo-500 mr-2"

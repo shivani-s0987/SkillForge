@@ -162,9 +162,9 @@ const LoginPage = () => {
         <div className="p-2 rounded-full bg-white shadow-lg">
           <Link to={"/"}>
             <img
-              src="/logo-cropped.png"
+              src="/logo.png"
               alt="Logo"
-              className="w-20 h-20 rounded-full"
+              className="w-60 h-60 rounded-full"
             />
           </Link>
         </div>

@@ -1,7 +1,6 @@
 import React from "react";
 import JoinUsBanner from "./components/JoinUsBanner";
 import TutorsSection from "./components/TutorsSection";
-import Testimonials from "./components/Testimonials";
 import useFetchLandingPage from "@/hooks/useFetchLandingPage";
 import Header from "@/components/layout/Header";
 import Hero from "./components/Hero";
