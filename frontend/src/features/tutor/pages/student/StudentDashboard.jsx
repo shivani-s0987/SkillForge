@@ -8,10 +8,13 @@ import { motion } from 'framer-motion';
 const StudentDashboard = () => {
   const [data, setData] = useState({students: [], aggregated: {}, time_series: {}});
   const [loading, setLoading] = useState(true);
+  const [query, setQuery] = useState('');
 
   const fetchData = async () => {
     try {
-      const res = await api.get('student-analytics/');
+      const params = {};
+      if (query) params.q = query;
+      const res = await api.get('student-analytics/', { params });
       setData(res.data);
     } catch (err) {
       console.error(err);
@@ -22,9 +25,9 @@ const StudentDashboard = () => {
 
   useEffect(() => {
     fetchData();
-    const iv = setInterval(fetchData, 30000); // auto-refresh every 30s
+    const iv = setInterval(fetchData, 30000);
     return () => clearInterval(iv);
-  }, []);
+  }, [query]);
 
   return (
     <motion.div initial={{opacity:0, y:10}} animate={{opacity:1, y:0}} className="p-6 bg-gray-50 min-h-screen">
@@ -32,7 +35,7 @@ const StudentDashboard = () => {
         <h2 className="text-2xl font-semibold text-indigo-700">Student Analytics</h2>
         <p className="text-sm text-gray-500">Real-time student performance and course insights</p>
 
-        <StudentFilters />
+        <StudentFilters query={query} onQueryChange={setQuery} onApply={fetchData} />
 
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-4 mt-6">
           <div className="col-span-1 bg-white p-4 rounded-lg shadow">

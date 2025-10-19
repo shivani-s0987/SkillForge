@@ -3,7 +3,7 @@ from datetime import datetime
 from django.core.mail import send_mail
 from django.conf import settings
 from django.db import transaction
-from django.db.models import Sum, Count
+from django.db.models import Sum, Count, Q
 from django.db.models.functions import TruncMonth
 from rest_framework import generics, status, viewsets, views
 from rest_framework.response import Response
@@ -408,7 +408,15 @@ class StudentAnalyticsViewSet(viewsets.ViewSet):
     """
     def list(self, request):
         # Return list of students with basic aggregated metrics and time-series placeholders
+        q = request.query_params.get('q')
         students = CustomUser.objects.filter(role='student').select_related()
+        if q:
+            students = students.filter(
+                Q(email__icontains=q) |
+                Q(username__icontains=q) |
+                Q(first_name__icontains=q) |
+                Q(last_name__icontains=q)
+            )
         data = []
         for s in students:
             enrolled = StudentCourseProgress.objects.filter(student=s)
