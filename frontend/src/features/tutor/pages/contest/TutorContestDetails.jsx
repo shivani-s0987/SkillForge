@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import { Link, useNavigate, useParams } from "react-router-dom";
 import useFetchContestDetails from "../../hooks/useFetchContestDetails";
 import {
@@ -18,6 +18,8 @@ const TutorContestDetails = () => {
   const { id } = useParams();
   const navigate = useNavigate();
   const { contestDetails, error, loading } = useFetchContestDetails(id);
+  const { user } = useSelector((state) => state.auth)
+  const [sendingReports, setSendingReports] = useState(false)
 
   const handleEditContest = () => {
     navigate(`/tutor/contest/${id}/edit`);
@@ -26,6 +28,35 @@ const TutorContestDetails = () => {
   const handleEditQuestion = (questionId) => {
     navigate(`/tutor/contest/${id}/question/${questionId}/edit`);
   };
+
+  const isFinished = (contestDetails?.status === 'finished') || (contestDetails?.end_time && new Date(contestDetails.end_time) < new Date())
+
+  const handleSendReports = async () => {
+    const res = await Swal.fire({
+      title: 'Send contest progress reports to all students?',
+      text: "This will email each student's contest progress using the stored contest_report.html template. Emails will be queued and sent sequentially (10s spacing). Continue?",
+      icon: 'warning',
+      showCancelButton: true,
+      confirmButtonText: 'Send Reports'
+    })
+
+    if (!res.isConfirmed) return
+
+    try {
+      setSendingReports(true)
+      const resp = await api.post(`contest/${id}/send-progress-reports/`)
+      if (resp.status === 202) {
+        displayToastAlert(202, 'Progress reports have been queued and will be delivered to students.')
+      } else if (resp.status === 200) {
+        // Not expected in our flow, but handle gracefully
+        displayToastAlert(200, 'Progress reports processed successfully')
+      }
+    } catch (err) {
+      console.error(err)
+      displayToastAlert(500, 'Failed to queue progress reports. Please try again.')
+      setSendingReports(false)
+    }
+  }
 
   if (loading)
     return <div className="text-center text-gray-500 my-8">Loading...</div>;
@@ -80,18 +111,29 @@ const TutorContestDetails = () => {
           <h1 className="text-2xl font-bold mb-2 sm:mb-0">
             {contestDetails.name}
           </h1>
-          <span
-            className={`px-3 py-1 rounded-full text-sm font-medium ${
-              contestDetails.status === "ongoing"
-                ? "bg-green-100 text-green-800"
-                : "bg-red-100 text-red-800"
-            }`}
-          >
-            {contestDetails?.status
-              ? contestDetails.status.charAt(0).toUpperCase() +
-                contestDetails.status.slice(1)
-              : ""}
-          </span>
+          <div className="flex items-center">
+            <span
+              className={`px-3 py-1 rounded-full text-sm font-medium ${
+                contestDetails.status === "ongoing"
+                  ? "bg-green-100 text-green-800"
+                  : "bg-red-100 text-red-800"
+              }`}
+            >
+              {contestDetails?.status
+                ? contestDetails.status.charAt(0).toUpperCase() +
+                  contestDetails.status.slice(1)
+                : ""}
+            </span>
+            {isFinished && (user?.is_staff || user?.role === 'tutor') && (
+              <button
+                onClick={handleSendReports}
+                disabled={sendingReports}
+                className="bg-blue-600 hover:bg-blue-700 text-white font-medium px-4 py-2 rounded transition duration-150 ease-in-out ml-4"
+              >
+                {sendingReports ? 'Queuing...' : 'Send Progress Reports'}
+              </button>
+            )}
+          </div>
         </div>
         {/* Tutor-only Generate All button shown after contest end */}
         {(contestDetails.end_time && new Date(contestDetails.end_time) < new Date()) && (

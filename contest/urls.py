@@ -1,6 +1,6 @@
 from django.urls import path, include
 from rest_framework.routers import DefaultRouter
-from .views import ContestViewSet, QuestionViewSet, SubmissionViewSet, global_leaderboard, SummarizedKeyNoteViewSet
+from .views import ContestViewSet, QuestionViewSet, SubmissionViewSet, global_leaderboard, SummarizedKeyNoteViewSet, SendProgressReportsView
 
 # Create a router and register our viewsets with it.
 router = DefaultRouter()
@@ -11,5 +11,6 @@ router.register(r'summarized-keynotes', SummarizedKeyNoteViewSet, basename='summ
 
 urlpatterns = [
     path('', include(router.urls)),  # Include the router URLs
-    path('global-leaderboard/', global_leaderboard, name='global-leaderboard')  # Global leaderboard endpoint
+    path('global-leaderboard/', global_leaderboard, name='global-leaderboard'),  # Global leaderboard endpoint
+    path('contest/<int:contest_id>/send-progress-reports/', SendProgressReportsView.as_view(), name='send-progress-reports'),
 ]

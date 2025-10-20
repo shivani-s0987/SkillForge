@@ -7,6 +7,7 @@ from django.utils.timezone import now
 from django.db.models import Sum
 from django.core.cache import cache
 from rest_framework.permissions import AllowAny
+from rest_framework.views import APIView
 
 from .models import Contest, Question, Option, Participant, Leaderboard, Submission, SummarizedKeyNote
 from .serializers import (
@@ -345,3 +346,45 @@ def global_leaderboard(request):
     ).order_by('-total_score')[:5]
 
     return Response(leaderboard)
+
+
+class SendProgressReportsView(APIView):
+    permission_classes = [IsAuthenticated]
+
+    def post(self, request, contest_id: int):
+        """Queue per-student progress report emails for a finished contest.
+
+        Only accessible to the contest's tutor or staff.
+        Returns 202 Accepted with a JSON summary when the background tasks are queued.
+        """
+        try:
+            contest = Contest.objects.filter(id=contest_id).first()
+            if not contest:
+                return Response({'detail': 'Contest not found'}, status=status.HTTP_404_NOT_FOUND)
+
+            # Must be finished (by status or by end_time)
+            is_finished = False
+            try:
+                is_finished = (contest.status == 'finished') or (contest.end_time and contest.end_time <= now())
+            except Exception:
+                is_finished = False
+            if not is_finished:
+                return Response({'detail': 'Contest is not finished yet'}, status=status.HTTP_400_BAD_REQUEST)
+
+            user = request.user
+            is_tutor = hasattr(user, 'tutor_profile') and contest.tutor and contest.tutor.user_id == user.id
+            if not (user.is_staff or is_tutor):
+                return Response({'detail': 'Not authorized'}, status=status.HTTP_403_FORBIDDEN)
+
+            # Queue background job in Celery
+            try:
+                from .tasks import queue_contest_progress_reports
+                queue_contest_progress_reports.delay(contest.id, user.id)
+            except Exception as e:
+                logger.exception('Failed to queue progress reports for contest=%s: %s', contest.id, e)
+                return Response({'detail': 'Failed to queue progress reports', 'error': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
+
+            return Response({'detail': 'Progress reports queued', 'contest_id': contest.id}, status=status.HTTP_202_ACCEPTED)
+        except Exception as e:
+            logger.exception('Unhandled error in SendProgressReportsView: %s', e)
+            return Response({'detail': 'Internal server error'}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
