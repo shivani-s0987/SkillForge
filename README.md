@@ -171,8 +171,8 @@ Before you begin, ensure you have the following installed:
 
 ```bash
 # 1️⃣ Clone the repository
-git clone https://github.com/shivani-s0987/SkillForge.git
-cd SkillForge
+git clone https://github.com/shivani-s0987/SkillForge-main.git
+cd SkillForge-main
 
 # 2️⃣ Set up environment variables
 cp .env.example .env
@@ -189,7 +189,8 @@ docker-compose exec web python manage.py createsuperuser
 
 # 6️⃣ Set up frontend
 cd frontend
-npm install
+npm install 
+npm install fix --force
 npm run dev
 ```
 
@@ -204,64 +205,76 @@ npm run dev
 Create a `.env` file in the project root:
 
 ```env
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ===============================
 # 🗄️ DATABASE CONFIGURATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DB_NAME=SkillForge_db
+# ===============================
+DB_NAME=postgres
 DB_USER=postgres
-DB_PASSWORD=your_secure_password_here
-DB_HOST=db
+DB_PASSWORD=your_db_password_here
+DB_HOST=localhost
 DB_PORT=5432
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🔴 REDIS CONFIGURATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-REDIS_URL=redis://redis:6379/0
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 📧 EMAIL CONFIGURATION
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+# ===============================
+# 🚀 REDIS CONFIGURATION
+# ===============================
+REDIS_URL=redis://localhost:6379/0
+
+
+# ===============================
+# 📧 SMTP EMAIL CONFIGURATION
+# ===============================
 EMAIL_BACKEND=django.core.mail.backends.smtp.EmailBackend
 EMAIL_HOST=smtp.gmail.com
 EMAIL_PORT=587
 EMAIL_USE_TLS=True
 EMAIL_HOST_USER=your_email@gmail.com
-EMAIL_HOST_PASSWORD=your_app_specific_password
+EMAIL_HOST_PASSWORD=your_app_specific_password_here
 DEFAULT_FROM_EMAIL=your_email@gmail.com
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💾 SUPABASE STORAGE
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-SUPABASE_URL=https://your-project.supabase.co
-SUPABASE_KEY=your_anon_public_key
-SUPABASE_SERVICE_KEY=your_service_role_key
-SUPABASE_BUCKET=skillforge-media
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🔐 GOOGLE OAUTH
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GOOGLE_OAUTH_CLIENT_ID=your_client_id.apps.googleusercontent.com
-GOOGLE_OAUTH_CLIENT_SECRET=your_client_secret
+# ===============================
+# 🧩 SUPABASE CONFIGURATION
+# ===============================
+SUPABASE_URL=https://your-supabase-instance-url.supabase.co
+SUPABASE_KEY=your_supabase_anon_key_here
+SUPABASE_SERVICE_KEY=your_supabase_service_role_key_here
+SUPABASE_BUCKET=learnora-media
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 💳 STRIPE PAYMENT
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-STRIPE_SECRET=sk_test_your_stripe_secret_key
-STRIPE_PUBLISHABLE_KEY=pk_test_your_publishable_key
-STRIPE_WEBHOOK_SECRET=whsec_your_webhook_secret
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🤖 GEMINI AI
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-GEMINI_API_KEY=your_gemini_api_key
+# ===============================
+# 🔐 GOOGLE OAUTH CONFIGURATION
+# ===============================
+GOOGLE_OAUTH_CLIENT_ID=your_google_client_id_here
+GOOGLE_OAUTH_CLIENT_SECRET=your_google_client_secret_here
 
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-# 🔧 DJANGO SETTINGS
-# ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-DEBUG=True
-SECRET_KEY=your_secret_key_here
-ALLOWED_HOSTS=localhost,127.0.0.1
-CORS_ALLOWED_ORIGINS=http://localhost:5173
+
+# ===============================
+# 💳 STRIPE PAYMENT CONFIGURATION
+# ===============================
+STRIPE_PUBLIC=your_stripe_public_key_here
+STRIPE_SECRET=your_stripe_secret_key_here
+
+
+# ===============================
+# 🤖 GEMINI AI CONFIGURATION
+# ===============================
+GEMINI_API_KEY=your_gemini_api_key_here
+GEMINI_MODEL_NAME=gemini-2.5-pro
+GEMINI_API_BASE=https://generativelanguage.googleapis.com/v1
+
+
+# ===============================
+# 🧠 OPENAI CONFIGURATION (Optional)
+# ===============================
+OPENAI_API_KEY=your_openai_api_key_here
+
+
+# ===============================
+# 🐇 CELERY CONFIGURATION
+# ===============================
+CELERY_TASK_ALWAYS_EAGER=False
+
 ```
 
 ### Frontend Environment Variables
@@ -757,8 +770,8 @@ We welcome contributions from the community! Here's how you can help:
 # Click the 'Fork' button on GitHub
 
 # 2️⃣ Clone your fork
-git clone https://github.com/YOUR_USERNAME/SkillForge.git
-cd SkillForge
+git clone https://github.com/shivani-s0987/SkillForge-main.git
+cd SkillForge-main
 
 # 3️⃣ Create a feature branch
 git checkout -b feature/amazing-feature
