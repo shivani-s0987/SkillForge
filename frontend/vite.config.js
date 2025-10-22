@@ -4,7 +4,7 @@ import path from 'path';
 
 export default defineConfig({
   plugins: [react()],
-  base: '/SkillForge/',
+  base: '/',
   server: {
     port: 9000,
   },
