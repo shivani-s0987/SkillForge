@@ -139,8 +139,10 @@ CSRF_TRUSTED_ORIGINS = [
     'https://13.233.151.229',
     'http://13.233.151.229',
     'http://localhost',
+    "http://localhost:9000",
+    "http://localhost:9000/SkillForge/",
     "http://localhost:5173",
-    'http://localhost:9000',
+    'http://localhost:9000/SkillForge/',
     "https://learnora1.vercel.app",
     'https://learnora.muhammeddanish.site',
     'https://www.learnora.muhammeddanish.site'
