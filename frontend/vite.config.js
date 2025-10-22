@@ -7,6 +7,7 @@ export default defineConfig({
   base: '/SkillForge/',
   server: {
     port: 9000,
+    open: '/SkillForge/', // 👈 automatically opens at /SkillForge/
   },
   resolve: {
     alias: {
