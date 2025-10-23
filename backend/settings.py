@@ -38,9 +38,7 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
-
     'channels',
-
     'users',
     'user_profile',
     'course',
@@ -135,6 +133,9 @@ AUTH_USER_MODEL = 'users.CustomUser'
 # CORS / CSRF
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
+CORS_ALLOWED_ORIGINS = [
+    "https://skill-forge-frontend-link.vercel.app",  # ✅ your Vercel frontend URL
+]
 CSRF_TRUSTED_ORIGINS = [
     'https://13.233.151.229',
     'http://13.233.151.229',
@@ -143,11 +144,11 @@ CSRF_TRUSTED_ORIGINS = [
     "http://localhost:9000/SkillForge/",
     "http://localhost:5173",
     'http://localhost:9000/SkillForge/',
-    "https://learnora1.vercel.app",
-    'https://learnora.muhammeddanish.site',
-    'https://www.learnora.muhammeddanish.site'
+    "https://skill-forge-frontend-link.vercel.app/",
+    'https://skill-forge-frontend-link.vercel.app/',
+    'https://learnora.muhammeddanish.site'
 ]
-FRONTEND_URL = "http://localhost:3000"
+FRONTEND_URL = "skill-forge-frontend-link.vercel.app"
 
 # Email
 EMAIL_BACKEND = env('EMAIL_BACKEND')
