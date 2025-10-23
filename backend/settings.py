@@ -13,8 +13,8 @@ env = environ.Env()
 environ.Env.read_env(os.path.join(BASE_DIR, '.env'))
 
 SECRET_KEY = 'django-insecure-hgs$8s@30@yok&uttm4k48$g84=5eom)cyn@9+_sq7xcjm)%-y'
-DEBUG = False
-ALLOWED_HOSTS = ['https://skill-forge-frontend-link.vercel.app','https://skillforge-1hw5.onrender.com']
+DEBUG = True
+ALLOWED_HOSTS = ['*']
 SITE_ID = 1
 
 INSTALLED_APPS = [
