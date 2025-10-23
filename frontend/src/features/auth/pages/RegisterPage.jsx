@@ -90,7 +90,7 @@ const RegisterPage = () => {
       <div className="hidden md:flex w-1/3 bg-indigo-900 fixed left-0 top-0 h-full items-center justify-center">
         <div className="p-2 rounded-full bg-white shadow-lg">
           <img
-            src="/logo-cropped.png"
+            src="/logo.png"
             alt="Logo"
             className="w-20 h-20 rounded-full"
           />
