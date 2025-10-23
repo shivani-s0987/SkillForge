@@ -2,6 +2,7 @@ services:
   - type: web
     name: skillforge
     env: python
+    pythonVersion: 3.12.3
     plan: free
     buildCommand: ./render-build.sh
     startCommand: gunicorn skillforge.wsgi:application
