@@ -1,5 +1,5 @@
 # Use an official Python runtime as a parent image
-FROM python:3.12
+FROM python:3.12-slim
 
 
 ENV PYTHONDONTWRITEBYCODE=1
@@ -12,8 +12,10 @@ WORKDIR /app
 COPY requirements.txt .
 
 # Upgrade pip and install production dependencies
-RUN python -m pip install --upgrade pip && pip install --no-cache-dir -r requirements.txt
+RUN python -m pip install --upgrade pip setuptools wheel
 
+# Install dependencies
+RUN pip install --no-cache-dir -r requirements.txt
 
 
 # Copy the rest of the application code
