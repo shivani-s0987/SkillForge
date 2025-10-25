@@ -2,7 +2,6 @@ import os
 from pathlib import Path
 from datetime import timedelta
 import environ
-import dj_database_url
 from dotenv import load_dotenv
 
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -39,7 +38,9 @@ INSTALLED_APPS = [
     'rest_framework',
     'rest_framework_simplejwt',
     'rest_framework_simplejwt.token_blacklist',
+
     'channels',
+
     'users',
     'user_profile',
     'course',
@@ -105,10 +106,15 @@ WSGI_APPLICATION = 'backend.wsgi.application'
 ASGI_APPLICATION = 'backend.asgi.application'
 
 # Database
-DATABASES ={
-    'default': dj_database_url.config(
-        default=os.environ.get('DB_URL')
-    )
+DATABASES = {
+    "default": {
+        "ENGINE": "django.db.backends.postgresql",
+        "NAME": env("DB_NAME"),
+        "USER": env("DB_USER"),
+        "PASSWORD": env("DB_PASSWORD"),
+        "HOST": env("DB_HOST"),
+        "PORT": env("DB_PORT"),
+    }
 }
 
 AUTH_PASSWORD_VALIDATORS = [
@@ -129,22 +135,17 @@ AUTH_USER_MODEL = 'users.CustomUser'
 # CORS / CSRF
 CORS_ALLOW_ALL_ORIGINS = True
 CORS_ALLOW_CREDENTIALS = True
-CORS_ALLOWED_ORIGINS = [
-    "https://skill-forge-frontend-link.vercel.app",  # ✅ your Vercel frontend URL
-]
 CSRF_TRUSTED_ORIGINS = [
     'https://13.233.151.229',
     'http://13.233.151.229',
     'http://localhost',
-    "http://localhost:9000",
-    "http://localhost:9000/SkillForge/",
     "http://localhost:5173",
-    'http://localhost:9000/SkillForge/',
-    "https://skill-forge-frontend-link.vercel.app/",
-    'https://skill-forge-frontend-link.vercel.app/',
-    'https://learnora.muhammeddanish.site'
+    'http://localhost:9000',
+    "https://learnora1.vercel.app",
+    'https://learnora.muhammeddanish.site',
+    'https://www.learnora.muhammeddanish.site'
 ]
-FRONTEND_URL = "skill-forge-frontend-link.vercel.app"
+FRONTEND_URL = "http://localhost:3000"
 
 # Email
 EMAIL_BACKEND = env('EMAIL_BACKEND')
@@ -153,8 +154,6 @@ EMAIL_PORT = env.int('EMAIL_PORT')
 EMAIL_USE_TLS = env.bool('EMAIL_USE_TLS')
 EMAIL_HOST_USER = env('EMAIL_HOST_USER')
 EMAIL_HOST_PASSWORD = env('EMAIL_HOST_PASSWORD')
-EMAIL_USE_TLS = os.environ.get('EMAIL_USE_TLS') == 'True'
-EMAIL_USE_SSL = os.environ.get('EMAIL_USE_SSL') == 'True'
 DEFAULT_FROM_EMAIL = env('DEFAULT_FROM_EMAIL', default=EMAIL_HOST_USER)
 
 # Auth
